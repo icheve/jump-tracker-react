@@ -1,0 +1,39 @@
+name: Prepare exercise videos
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - scripts/prepare-videos.mjs
+      - .github/workflows/prepare-videos.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: exercise-videos
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Install FFmpeg when missing
+        shell: bash
+        run: |
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+          fi
+          ffmpeg -version
+      - name: Convert and upload videos
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/prepare-videos.mjs

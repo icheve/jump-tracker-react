@@ -3,6 +3,7 @@ import { useApp } from '../../store/AppStore';
 import { sb } from '../../lib/supabase';
 import { pctKg } from '../../lib/utils';
 import type { Exercise } from '../../types';
+import { VideoButton } from '../../components/VideoPlayer';
 import { ExerciseEditor } from './ExerciseEditor';
 
 export function DayView({ dayIdx, setHead, onBack, goWorkout }:
@@ -101,9 +102,11 @@ export function DayView({ dayIdx, setHead, onBack, goWorkout }:
             {videos.some(Boolean) && (
               <div className="row" style={{ marginTop: 8 }}>
                 {videos.map((url, index) => url && (
-                  <a key={`${url}-${index}`} className="vbtn" href={url} target="_blank" rel="noopener noreferrer">
-                    ▶ {videos.length > 1 ? variants[index] ?? `Вариант ${index + 1}` : 'Видео'}
-                  </a>
+                  <VideoButton
+                    key={`${url}-${index}`}
+                    url={url}
+                    label={videos.length > 1 ? variants[index] ?? `Вариант ${index + 1}` : 'Видео'}
+                  />
                 ))}
               </div>
             )}

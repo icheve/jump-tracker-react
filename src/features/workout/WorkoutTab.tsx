@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { VideoButton } from '../../components/VideoPlayer';
 import { useApp, buildLog } from '../../store/AppStore';
 import { fmtD, lastFor, pctKg } from '../../lib/utils';
 import type { ActiveWorkout } from '../../types';
@@ -91,9 +92,10 @@ export function WorkoutTab({ setHead, goStats, goProgram }:
             )}
             {video && (
               <div style={{ marginTop: 6 }}>
-                <a className="vbtn" href={video} target="_blank" rel="noopener noreferrer">
-                  ▶ Видео{vars.length > 1 ? `: ${vars[x.variant]}` : ''}
-                </a>
+                <VideoButton
+                  url={video}
+                  label={`Видео${vars.length > 1 ? `: ${vars[x.variant]}` : ''}`}
+                />
               </div>
             )}
 
