@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: exercise-videos
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   prepare:
@@ -36,4 +36,5 @@ jobs:
       - name: Convert and upload videos
         env:
           GH_TOKEN: ${{ github.token }}
+          MAX_SOURCE_BYTES: 209715200
         run: node scripts/prepare-videos.mjs

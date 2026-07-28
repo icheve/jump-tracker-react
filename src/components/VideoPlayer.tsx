@@ -13,6 +13,15 @@ interface ResolvedVideo {
 }
 
 const VIDEO_RELEASE = 'https://github.com/icheve/jump-tracker-react/releases/download/videos-v1';
+const LINK_ONLY_YANDEX_IDS = new Set([
+  'I4op0LLx-cdKCQ',
+  '8VCPLkBKcIhm9A',
+  'gq5U67ua1c4SIg',
+  'HbHMGUZG7ehTmA',
+  'BRBB1pIR2DiNeg',
+  'UEf7IU7-yi1LhA',
+  '1piwfy9N8JZBmg',
+]);
 
 function youtubeEmbed(url: string): string | null {
   try {
@@ -133,6 +142,15 @@ function VideoPlayer({ url, title, onClose }: { url: string; title: string; onCl
 
 export function VideoButton({ url, label }: VideoButtonProps) {
   const [open, setOpen] = useState(false);
+  const yandexId = yandexVideoId(url);
+
+  if (yandexId && LINK_ONLY_YANDEX_IDS.has(yandexId)) {
+    return (
+      <a className="vbtn" href={url} target="_blank" rel="noopener noreferrer">
+        ▶ {label} ↗
+      </a>
+    );
+  }
 
   return (
     <>

@@ -11,6 +11,10 @@ const ffprobe = process.env.FFPROBE_PATH || 'ffprobe';
 const upload = process.env.SKIP_UPLOAD !== '1' && Boolean(process.env.GH_TOKEN);
 const limit = Number.parseInt(process.env.VIDEO_LIMIT || '', 10);
 const onlyId = process.env.VIDEO_ID || '';
+const maxSourceBytes = Number.parseInt(
+  process.env.MAX_SOURCE_BYTES || String(200 * 1024 * 1024),
+  10,
+);
 
 function run(command, args, { capture = false, allowFailure = false } = {}) {
   return new Promise((resolve, reject) => {
@@ -46,15 +50,29 @@ async function getDownload(url) {
   return data.href;
 }
 
+async function getMetadata(url) {
+  const endpoint = `https://cloud-api.yandex.net/v1/disk/public/resources?public_key=${encodeURIComponent(url)}&fields=name,size`;
+  const response = await fetch(endpoint);
+  if (!response.ok) throw new Error(`Яндекс Диск вернул ${response.status} для ${url}`);
+  const data = await response.json();
+  if (!Number.isFinite(data.size)) throw new Error(`Яндекс Диск не вернул размер файла для ${url}`);
+  return data;
+}
+
 async function ensureRelease() {
   const view = await run(
     'gh',
-    ['release', 'view', releaseTag, '--repo', repository, '--json', 'assets', '--jq', '.assets[].name'],
+    ['release', 'view', releaseTag, '--repo', repository, '--json', 'assets'],
     { capture: true, allowFailure: true },
   );
 
   if (view.code === 0) {
-    return new Set(view.stdout.split(/\r?\n/).filter(Boolean));
+    const release = JSON.parse(view.stdout);
+    return new Set(
+      release.assets
+        .filter((asset) => asset.size > 100_000)
+        .map((asset) => asset.name),
+    );
   }
 
   await run('gh', [
@@ -135,6 +153,14 @@ for (let index = 0; index < urls.length; index += 1) {
 
   if (existingAssets.has(assetName)) {
     console.log(`[${index + 1}/${urls.length}] Уже загружено: ${assetName}`);
+    continue;
+  }
+
+  const metadata = await getMetadata(sourceUrl);
+  if (metadata.size > maxSourceBytes) {
+    console.log(
+      `[${index + 1}/${urls.length}] Оставлено ссылкой: ${assetName} (${(metadata.size / 1024 / 1024).toFixed(1)} МБ)`,
+    );
     continue;
   }
 
