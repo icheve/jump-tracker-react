@@ -1,10 +1,12 @@
 /* Тёмная тема — перенесена из старого index.html для полной визуальной совместимости */
 :root{--bg:#0f1115;--card:#1a1e27;--card2:#232936;--txt:#e8ecf3;--mut:#8b93a5;--acc:#4ade80;--acc2:#60a5fa;--warn:#f87171;--bord:#2c3342}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--txt);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;font-size:15px;padding-bottom:calc(64px + env(safe-area-inset-bottom))}
-header{position:sticky;top:0;z-index:20;background:rgba(15,17,21,.95);backdrop-filter:blur(8px);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--bord);display:flex;align-items:center;gap:10px}
+html,body,#root{width:100%;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--txt);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;font-size:15px}
+#root{height:100dvh;min-height:0;position:relative;display:flex;flex-direction:column}
+header{position:relative;flex:0 0 auto;z-index:20;background:rgba(15,17,21,.95);backdrop-filter:blur(8px);padding:calc(10px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--bord);display:flex;align-items:center;gap:10px}
 header h1{font-size:17px;font-weight:700;flex:1}
-main{padding:14px;max-width:640px;margin:0 auto}
+main{width:100%;min-height:0;flex:1 1 auto;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px;max-width:640px;margin:0 auto}
 .card{background:var(--card);border:1px solid var(--bord);border-radius:14px;padding:14px;margin-bottom:10px}
 .card h3{font-size:15px;margin-bottom:4px}
 .mut{color:var(--mut);font-size:12.5px}
@@ -20,7 +22,7 @@ main{padding:14px;max-width:640px;margin:0 auto}
 input,textarea,select{background:var(--card2);border:1px solid var(--bord);color:var(--txt);border-radius:9px;padding:9px 10px;font-size:14px;width:100%}
 input:focus,textarea:focus{outline:1px solid var(--acc)}
 label{font-size:12px;color:var(--mut);display:block;margin:8px 0 3px}
-nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;background:#141822;border-top:1px solid var(--bord);padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs{position:relative;flex:0 0 auto;z-index:30;display:flex;background:#141822;border-top:1px solid var(--bord);padding-bottom:env(safe-area-inset-bottom)}
 nav.tabs button{flex:1;background:none;border:none;color:var(--mut);font-size:10.5px;padding:7px 0 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
 nav.tabs button.on{color:var(--acc)}
 nav.tabs button span{font-size:19px;line-height:1}
@@ -31,7 +33,7 @@ nav.tabs button span{font-size:19px;line-height:1}
 .done-btn{width:40px;height:38px;border-radius:9px;border:1px solid var(--bord);background:var(--card2);color:var(--mut);font-size:17px;cursor:pointer}
 .done-btn.on{background:var(--acc);color:#08130b;border-color:var(--acc)}
 .vbtn{color:var(--acc2);font-size:12.5px;font-family:inherit;text-decoration:none;border:1px solid var(--acc2);border-radius:8px;padding:5px 10px;display:inline-block;background:transparent;cursor:pointer;text-align:left}
-.timerbar{position:fixed;bottom:calc(52px + env(safe-area-inset-bottom));left:0;right:0;z-index:25;background:#141822ee;border-top:1px solid var(--bord);padding:8px 12px;display:flex;align-items:center;gap:8px;justify-content:center}
+.timerbar{position:absolute;bottom:calc(52px + env(safe-area-inset-bottom));left:0;right:0;z-index:25;background:#141822ee;border-top:1px solid var(--bord);padding:8px 12px;display:flex;align-items:center;gap:8px;justify-content:center}
 .timer-readouts{display:flex;flex-direction:column;align-items:center;min-width:70px}
 .tdisp{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;min-width:70px;text-align:center}
 .tdisp.alert{color:var(--warn)}

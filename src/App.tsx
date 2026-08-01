@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useApp } from './store/AppStore';
 import { AuthScreen } from './features/auth/AuthScreen';
 import { RecoveryScreen } from './features/auth/RecoveryScreen';
@@ -16,9 +16,10 @@ export function App() {
   const app = useApp();
   const [tab, setTab] = useState<Tab>('prog');
   const [head, setHeadState] = useState({ t: 'Jump Tracker', s: '' });
+  const mainRef = useRef<HTMLElement>(null);
 
   const setHead = useCallback((t: string, s = '') => setHeadState({ t, s }), []);
-  useEffect(() => { window.scrollTo(0, 0); }, [tab]);
+  useEffect(() => { mainRef.current?.scrollTo(0, 0); }, [tab]);
 
   if (!app.ready) {
     return <main><div className="card mut" style={{ marginTop: 24 }}>Загрузка…</div></main>;
@@ -39,7 +40,7 @@ export function App() {
     <>
       <header><h1>{head.t}</h1><span className="mut">{head.s}</span></header>
 
-      <main>
+      <main ref={mainRef}>
         {app.viewing && (
           <div className="card viewbar">
             <div className="row" style={{ justifyContent: 'space-between' }}>
