@@ -58,7 +58,7 @@ export function App() {
         {tab === 'set' && <SettingsTab setHead={setHead} />}
       </main>
 
-      {tab === 'wo' && app.aw && !app.viewing && <RestTimer />}
+      {tab === 'wo' && app.aw && !app.viewing && <RestTimer workoutStart={app.aw.start} />}
 
       <nav className="tabs">
         {tabs.map(([id, icon, label]) => (

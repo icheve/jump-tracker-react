@@ -17,10 +17,18 @@ function beep() {
 }
 
 /** Таймер отдыха — панель над нижней навигацией */
-export function RestTimer() {
+export function RestTimer({ workoutStart }: { workoutStart: number }) {
   const [end, setEnd] = useState<number | null>(null);
   const [left, setLeft] = useState<number | null>(null);
+  const [elapsed, setElapsed] = useState(0);
   const int = useRef<number>();
+
+  useEffect(() => {
+    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - workoutStart) / 1000)));
+    tick();
+    const elapsedInterval = window.setInterval(tick, 1000);
+    return () => window.clearInterval(elapsedInterval);
+  }, [workoutStart]);
 
   useEffect(() => {
     if (end === null) { setLeft(null); return; }
@@ -41,6 +49,11 @@ export function RestTimer() {
   const disp = left === null ? '–:––'
     : left <= 0 ? '0:00'
     : `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  const elapsedDisp = [
+    Math.floor(elapsed / 3600),
+    Math.floor((elapsed % 3600) / 60),
+    elapsed % 60,
+  ].map((part) => String(part).padStart(2, '0')).join(':');
 
   return (
     <div className="timerbar">
@@ -49,7 +62,10 @@ export function RestTimer() {
           {Math.floor(s / 60)}:{String(s % 60).padStart(2, '0')}
         </button>
       ))}
-      <div className={`tdisp ${left !== null && left <= 0 ? 'alert' : ''}`}>{disp}</div>
+      <div className="timer-readouts">
+        <div className={`tdisp ${left !== null && left <= 0 ? 'alert' : ''}`}>{disp}</div>
+        <div className="workout-duration">Всего {elapsedDisp}</div>
+      </div>
       <button className="btn sm danger" onClick={() => setEnd(null)}>✕</button>
     </div>
   );

@@ -32,8 +32,10 @@ nav.tabs button span{font-size:19px;line-height:1}
 .done-btn.on{background:var(--acc);color:#08130b;border-color:var(--acc)}
 .vbtn{color:var(--acc2);font-size:12.5px;font-family:inherit;text-decoration:none;border:1px solid var(--acc2);border-radius:8px;padding:5px 10px;display:inline-block;background:transparent;cursor:pointer;text-align:left}
 .timerbar{position:fixed;bottom:calc(52px + env(safe-area-inset-bottom));left:0;right:0;z-index:25;background:#141822ee;border-top:1px solid var(--bord);padding:8px 12px;display:flex;align-items:center;gap:8px;justify-content:center}
+.timer-readouts{display:flex;flex-direction:column;align-items:center;min-width:70px}
 .tdisp{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;min-width:70px;text-align:center}
 .tdisp.alert{color:var(--warn)}
+.workout-duration{color:var(--mut);font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap;margin-top:-2px}
 .modal{position:fixed;inset:0;height:100vh;height:100dvh;overflow:hidden;background:rgba(0,0,0,.65);z-index:50;display:flex;align-items:flex-end;justify-content:center}
 .modal .box{background:var(--card);border-radius:18px 18px 0 0;width:100%;max-width:640px;max-height:88vh;max-height:88dvh;overflow:hidden;display:flex;flex-direction:column}
 .sheet-head{flex:0 0 auto;display:flex;justify-content:flex-end;padding:10px 12px 0}
