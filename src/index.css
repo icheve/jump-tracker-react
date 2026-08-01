@@ -36,6 +36,7 @@ nav.tabs button span{font-size:19px;line-height:1}
 .tdisp{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;min-width:70px;text-align:center}
 .tdisp.alert{color:var(--warn)}
 .workout-duration{color:var(--mut);font-size:10px;font-variant-numeric:tabular-nums;white-space:nowrap;margin-top:-2px}
+.workout-active{padding-bottom:64px}
 .modal{position:fixed;inset:0;height:100vh;height:100dvh;overflow:hidden;background:rgba(0,0,0,.65);z-index:50;display:flex;align-items:flex-end;justify-content:center}
 .modal .box{background:var(--card);border-radius:18px 18px 0 0;width:100%;max-width:640px;max-height:88vh;max-height:88dvh;overflow:hidden;display:flex;flex-direction:column}
 .sheet-head{flex:0 0 auto;display:flex;justify-content:flex-end;padding:10px 12px 0}

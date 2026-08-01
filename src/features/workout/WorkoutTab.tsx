@@ -59,7 +59,7 @@ export function WorkoutTab({ setHead, goStats, goProgram }:
   }
 
   return (
-    <>
+    <div className="workout-active">
       {aw.ex.map((x, j) => {
         const vars = x.n.split(' / ');
         const video = x.videos?.[x.variant] || x.v;
@@ -138,6 +138,6 @@ export function WorkoutTab({ setHead, goStats, goProgram }:
 
       <button className="btn wide" onClick={finish}>✅ Завершить и сохранить</button>
       <button className="btn danger wide" onClick={cancel}>Отменить тренировку</button>
-    </>
+    </div>
   );
 }
