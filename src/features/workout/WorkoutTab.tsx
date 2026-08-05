@@ -66,13 +66,25 @@ export function WorkoutTab({ setHead, goStats, goProgram }:
         const videos = vars.length === 1 && x.videos?.length
           ? x.videos.filter(Boolean)
           : (selectedVideo ? [selectedVideo] : []);
+        const block = x.block?.trim();
+        const blockStart = !!block && aw.ex[j - 1]?.block !== block;
+        const blockEnd = !!block && aw.ex[j + 1]?.block !== block;
+        const blockIndex = block ? aw.ex.slice(0, j + 1).filter((item) => item.block === block).length : 0;
         const doneCnt = x.rows.filter((r) => r.done).length;
         const prev = lastFor(app.logs, x.n);
         const rm = app.settings.rm[x.n];
         return (
-          <div key={j} className="card">
+          <div key={j} className={block ? 'training-block-entry' : ''}>
+            {blockStart && (
+              <div className="training-block-head">
+                <div><b>Блок {block}</b><span>выполнять по кругу</span></div>
+                {x.blockRest && <div className="mut">⏱ {x.blockRest}</div>}
+              </div>
+            )}
+            <div className={`card ${block ? `training-block-item ${blockEnd ? 'last' : ''}` : ''}`}>
             <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div className="exname" style={{ flex: 1 }}>
+                {block && <span className="block-code">{block}{blockIndex}</span>}
                 {vars[0]}{x.note && <span className="mut"> ({x.note})</span>}
               </div>
               <span className="mut">{doneCnt}/{x.rows.length}</span>
@@ -87,7 +99,7 @@ export function WorkoutTab({ setHead, goStats, goProgram }:
               </div>
             )}
 
-            <div className="mut">⏱ {x.rest}</div>
+            {!block && <div className="mut">⏱ {x.rest}</div>}
             {prev && (
               <div className="mut" style={{ marginTop: 4, color: 'var(--acc2)' }}>
                 ↩ {fmtD(prev.date)}: {prev.sets.map((s) => `${s.w || '—'}×${s.r || '—'}`).join(', ')}
@@ -139,6 +151,7 @@ export function WorkoutTab({ setHead, goStats, goProgram }:
               </button>
               <input placeholder="заметка..." style={{ flex: 1, width: 'auto' }} value={x.unote}
                 onChange={(e) => patchEx(j, { unote: e.target.value })} />
+            </div>
             </div>
           </div>
         );

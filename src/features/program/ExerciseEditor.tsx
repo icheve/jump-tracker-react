@@ -26,6 +26,8 @@ export function ExerciseEditor({ initial, onSave, onDelete, onClose }:
   const [sets, setSets] = useState(setsToText(x));
   const [rest, setRest] = useState(x.rest);
   const [note, setNote] = useState(x.note);
+  const [block, setBlock] = useState(x.block ?? '');
+  const [blockRest, setBlockRest] = useState(x.blockRest ?? '');
 
   const known = knownExercises(app.prog);
 
@@ -54,6 +56,10 @@ export function ExerciseEditor({ initial, onSave, onDelete, onClose }:
       <input value={rest} onChange={(e) => setRest(e.target.value)} />
       <label>Заметка (каждая нога/рука и т.п.)</label>
       <input value={note} onChange={(e) => setNote(e.target.value)} />
+      <label>Блок (A, B, C…)</label>
+      <input value={block} onChange={(e) => setBlock(e.target.value.toUpperCase())} placeholder="не указан — отдельное упражнение" />
+      <label>Общий отдых блока</label>
+      <input value={blockRest} onChange={(e) => setBlockRest(e.target.value)} placeholder="1 мин между упражнениями…" />
       <div className="row" style={{ marginTop: 14 }}>
         <button className="btn" onClick={() => {
           const videoList = videos.split('\n').map((url) => url.trim());
@@ -62,6 +68,8 @@ export function ExerciseEditor({ initial, onSave, onDelete, onClose }:
             n: n.trim() || 'Упражнение',
             v: videoList.find(Boolean) ?? '',
             videos: videoList.length > 1 ? videoList : undefined,
+            block: block.trim() || undefined,
+            blockRest: blockRest.trim() || undefined,
             s: parseSets(sets), rest: rest.trim(), note: note.trim(),
           });
         }}>

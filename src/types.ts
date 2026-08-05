@@ -5,6 +5,8 @@ export interface Exercise {
   n: string;      // название, варианты через " / "
   v: string;      // основная/первая ссылка на видео (совместимость со старыми данными)
   videos?: string[]; // ссылки по индексам вариантов названия
+  block?: string; // метка парного/кругового блока: A, B, C…
+  blockRest?: string; // общая инструкция по отдыху внутри блока
   s: SetScheme[]; // подходы
   rest: string;   // отдых
   note: string;   // «каждая нога» и т.п.
@@ -64,6 +66,7 @@ export interface Template {
 export interface ActiveRow { plan: string; int: string; w: string; r: string; done: boolean }
 export interface ActiveExercise {
   n: string; v: string; videos?: string[]; rest: string; note: string;
+  block?: string; blockRest?: string;
   variant: number; unote: string; rows: ActiveRow[];
 }
 export interface ActiveWorkout { dayIdx: number; dayTitle: string; start: number; ex: ActiveExercise[] }

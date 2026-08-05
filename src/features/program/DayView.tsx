@@ -51,7 +51,8 @@ export function DayView({ dayIdx, setHead, onBack, goWorkout }:
       dayTitle: `${d.t} · ${d.s}`,
       start: Date.now(),
       ex: d.e.map((x) => ({
-        n: x.n, v: x.v, videos: x.videos, rest: x.rest, note: x.note, variant: 0, unote: '',
+        n: x.n, v: x.v, videos: x.videos, rest: x.rest, note: x.note,
+        block: x.block, blockRest: x.blockRest, variant: 0, unote: '',
         rows: x.s.flatMap((g) =>
           Array.from({ length: g[0] }, () => ({ plan: g[1], int: g[2], w: '', r: '', done: false }))),
       })),
@@ -81,10 +82,23 @@ export function DayView({ dayIdx, setHead, onBack, goWorkout }:
         const rm = app.settings.rm[x.n];
         const variants = x.n.split(' / ');
         const videos = x.videos?.length ? x.videos : (x.v ? [x.v] : []);
+        const block = x.block?.trim();
+        const blockStart = !!block && d.e[j - 1]?.block !== block;
+        const blockEnd = !!block && d.e[j + 1]?.block !== block;
+        const blockIndex = block ? d.e.slice(0, j + 1).filter((item) => item.block === block).length : 0;
         return (
-          <div key={j} className="card">
+          <div key={j} className={block ? 'training-block-entry' : ''}>
+            {blockStart && (
+              <div className="training-block-head">
+                <div><b>Блок {block}</b><span>выполнять по кругу</span></div>
+                {x.blockRest && <div className="mut">⏱ {x.blockRest}</div>}
+              </div>
+            )}
+            <div className={`card ${block ? `training-block-item ${blockEnd ? 'last' : ''}` : ''}`}>
             <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div className="exname" style={{ flex: 1 }}>{x.n}</div>
+              <div className="exname" style={{ flex: 1 }}>
+                {block && <span className="block-code">{block}{blockIndex}</span>}{x.n}
+              </div>
               <button className="btn sm sec" onClick={() => setEditIdx(j)}>✎</button>
             </div>
             <div className="setsline">
@@ -98,7 +112,11 @@ export function DayView({ dayIdx, setHead, onBack, goWorkout }:
                 );
               })}
             </div>
-            <div className="mut" style={{ marginTop: 4 }}>⏱ {x.rest}{x.note ? ` · ${x.note}` : ''}</div>
+            {(!block || x.note) && (
+              <div className="mut" style={{ marginTop: 4 }}>
+                {!block && <>⏱ {x.rest}</>}{!block && x.note ? ' · ' : ''}{x.note}
+              </div>
+            )}
             {videos.some(Boolean) && (
               <div className="row" style={{ marginTop: 8 }}>
                 {videos.map((url, index) => url && (
@@ -110,6 +128,7 @@ export function DayView({ dayIdx, setHead, onBack, goWorkout }:
                 ))}
               </div>
             )}
+            </div>
           </div>
         );
       })}

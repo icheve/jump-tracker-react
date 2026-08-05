@@ -87,9 +87,9 @@ function upgradeLegacyProgram(days: Day[], profile: Profile | null): Day[] {
   return missingNewDays.length ? [...next, ...deepCopy(missingNewDays)] : next;
 }
 
-/** Добавляет только отсутствующие ссылки из эталонной программы.
- *  Названия, параметры упражнений и уже заданные пользователем видео не меняются. */
-function enrichProgramVideos(days: Day[]): Day[] {
+/** Добавляет отсутствующие видео и метки блоков из эталонной программы.
+ *  Названия, подходы и уже заданные пользователем поля не меняются. */
+function enrichProgramMetadata(days: Day[]): Day[] {
   let programChanged = false;
   const next = days.map((day) => {
     const sourceDay = DEFAULT_PROGRAM.find((source) => source.t === day.t);
@@ -102,13 +102,17 @@ function enrichProgramVideos(days: Day[]): Day[] {
 
       const needsPrimary = !exercise.v && !!source.v;
       const needsVariants = !exercise.videos?.some(Boolean) && !!source.videos?.some(Boolean);
-      if (!needsPrimary && !needsVariants) return exercise;
+      const needsBlock = !exercise.block && !!source.block;
+      const needsBlockRest = !exercise.blockRest && !!source.blockRest;
+      if (!needsPrimary && !needsVariants && !needsBlock && !needsBlockRest) return exercise;
 
       dayChanged = true;
       return {
         ...exercise,
         v: needsPrimary ? source.v : exercise.v,
         videos: needsVariants ? source.videos : exercise.videos,
+        block: needsBlock ? source.block : exercise.block,
+        blockRest: needsBlockRest ? source.blockRest : exercise.blockRest,
       };
     });
 
@@ -322,12 +326,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       queueMutation({ kind: 'program', userId, days });
     }
     const upgradedDays = upgradeLegacyProgram(days, profile);
-    const addedDays = upgradedDays !== days;
-    const enrichedDays = enrichProgramVideos(upgradedDays);
+    const enrichedDays = enrichProgramMetadata(upgradedDays);
     if (enrichedDays !== days) {
       days = enrichedDays;
       queueMutation({ kind: 'program', userId, days });
-      toast(addedDays ? 'Программа обновлена ✓' : 'Ссылки на видео добавлены ✓');
+      toast('Программа обновлена ✓');
     }
     setProg(days);
 
@@ -572,7 +575,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const loadedDays = pr.data && Array.isArray(pr.data.days) && pr.data.days.length
       ? (pr.data.days as Day[])
       : [{ t: 'День 1', s: 'программа от тренера', e: [] }];
-    const days = enrichProgramVideos(upgradeLegacyProgram(loadedDays, p));
+    const days = enrichProgramMetadata(upgradeLegacyProgram(loadedDays, p));
     if (days !== loadedDays) queueMutation({ kind: 'program', userId: p.id, days });
     const studentLogs = ((wo.data ?? []) as { data: WorkoutLog }[]).map((r) => r.data).sort((a, b) => a.id - b.id);
     const studentMetrics = ((mt.data ?? []) as { data: Measurement }[]).map((r) => r.data).sort((a, b) => a.id - b.id);
