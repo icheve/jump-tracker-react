@@ -62,7 +62,10 @@ export function WorkoutTab({ setHead, goStats, goProgram }:
     <div className="workout-active">
       {aw.ex.map((x, j) => {
         const vars = x.n.split(' / ');
-        const video = x.videos?.[x.variant] || x.v;
+        const selectedVideo = x.videos?.[x.variant] || x.v;
+        const videos = vars.length === 1 && x.videos?.length
+          ? x.videos.filter(Boolean)
+          : (selectedVideo ? [selectedVideo] : []);
         const doneCnt = x.rows.filter((r) => r.done).length;
         const prev = lastFor(app.logs, x.n);
         const rm = app.settings.rm[x.n];
@@ -90,12 +93,17 @@ export function WorkoutTab({ setHead, goStats, goProgram }:
                 ↩ {fmtD(prev.date)}: {prev.sets.map((s) => `${s.w || '—'}×${s.r || '—'}`).join(', ')}
               </div>
             )}
-            {video && (
-              <div style={{ marginTop: 6 }}>
-                <VideoButton
-                  url={video}
-                  label={`Видео${vars.length > 1 ? `: ${vars[x.variant]}` : ''}`}
-                />
+            {videos.length > 0 && (
+              <div className="row" style={{ marginTop: 6 }}>
+                {videos.map((video, index) => (
+                  <VideoButton
+                    key={`${video}-${index}`}
+                    url={video}
+                    label={vars.length > 1
+                      ? `Видео: ${vars[x.variant]}`
+                      : videos.length > 1 ? `Видео ${index + 1}` : 'Видео'}
+                  />
+                ))}
               </div>
             )}
 

@@ -5,6 +5,7 @@ on:
   push:
     branches: [main]
     paths:
+      - src/data/program.ts
       - scripts/prepare-videos.mjs
       - .github/workflows/prepare-videos.yml
 
