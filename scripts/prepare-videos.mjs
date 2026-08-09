@@ -9,12 +9,22 @@ const outputDir = path.resolve(process.env.VIDEO_OUTPUT_DIR || 'video-output');
 const ffmpeg = process.env.FFMPEG_PATH || 'ffmpeg';
 const ffprobe = process.env.FFPROBE_PATH || 'ffprobe';
 const upload = process.env.SKIP_UPLOAD !== '1' && Boolean(process.env.GH_TOKEN);
+const releaseOnly = process.env.VIDEO_RELEASE_ONLY === '1';
 const limit = Number.parseInt(process.env.VIDEO_LIMIT || '', 10);
 const onlyId = process.env.VIDEO_ID || '';
+const shardCount = Number.parseInt(process.env.VIDEO_SHARD_COUNT || '1', 10);
+const shardIndex = Number.parseInt(process.env.VIDEO_SHARD_INDEX || '0', 10);
 const maxSourceBytes = Number.parseInt(
   process.env.MAX_SOURCE_BYTES || String(200 * 1024 * 1024),
   10,
 );
+
+if (!Number.isInteger(shardCount) || shardCount < 1) {
+  throw new Error(`Некорректное количество частей: ${process.env.VIDEO_SHARD_COUNT}`);
+}
+if (!Number.isInteger(shardIndex) || shardIndex < 0 || shardIndex >= shardCount) {
+  throw new Error(`Некорректный номер части: ${process.env.VIDEO_SHARD_INDEX}`);
+}
 
 function run(command, args, { capture = false, allowFailure = false } = {}) {
   return new Promise((resolve, reject) => {
@@ -62,12 +72,16 @@ async function getMetadata(url) {
 async function ensureRelease() {
   const view = await run(
     'gh',
-    ['release', 'view', releaseTag, '--repo', repository, '--json', 'assets'],
+    ['release', 'view', releaseTag, '--repo', repository, '--json', 'assets,isDraft'],
     { capture: true, allowFailure: true },
   );
 
   if (view.code === 0) {
     const release = JSON.parse(view.stdout);
+    if (release.isDraft) {
+      await run('gh', ['release', 'edit', releaseTag, '--repo', repository, '--draft=false']);
+      console.log(`Релиз ${releaseTag} опубликован: уже готовые ролики стали доступны.`);
+    }
     return new Set(
       release.assets
         .filter((asset) => asset.size > 100_000)
@@ -81,8 +95,8 @@ async function ensureRelease() {
     '--target', process.env.GITHUB_SHA || 'main',
     '--title', 'Видео упражнений',
     '--notes', 'Оптимизированные H.264-копии видео для встроенного плеера приложения.',
-    '--draft',
   ]);
+  console.log(`Создан публичный релиз ${releaseTag}.`);
   return new Set();
 }
 
@@ -107,9 +121,9 @@ async function transcode(sourceUrl, outputPath, index, total) {
         '-i', directUrl,
         '-map', '0:v:0',
         '-map', '0:a:0?',
-        '-vf', 'scale=960:960:force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30',
+        '-vf', 'scale=720:720:force_original_aspect_ratio=decrease:force_divisible_by=2,fps=30',
         '-c:v', 'libx264',
-        '-preset', 'medium',
+        '-preset', 'veryfast',
         '-crf', '26',
         '-pix_fmt', 'yuv420p',
         '-c:a', 'aac',
@@ -138,10 +152,16 @@ const source = await readFile(path.resolve('src/data/program.ts'), 'utf8');
 let urls = [...new Set(source.match(/https:\/\/disk\.yandex\.ru\/i\/[\w-]+/g) || [])];
 if (onlyId) urls = urls.filter((url) => url.endsWith(`/${onlyId}`));
 if (Number.isFinite(limit) && limit > 0) urls = urls.slice(0, limit);
+urls = urls.filter((_, index) => index % shardCount === shardIndex);
 if (!urls.length) throw new Error('В program.ts не найдены подходящие видео');
 
 await mkdir(outputDir, { recursive: true });
 const existingAssets = upload ? await ensureRelease() : new Set();
+if (releaseOnly) {
+  console.log(`Релиз ${releaseTag} готов к постепенной загрузке видео.`);
+  process.exit(0);
+}
+console.log(`Часть ${shardIndex + 1}/${shardCount}: ${urls.length} роликов.`);
 let encodedBytes = 0;
 let processed = 0;
 
@@ -176,10 +196,6 @@ for (let index = 0; index < urls.length; index += 1) {
     existingAssets.add(assetName);
     console.log(`[${index + 1}/${urls.length}] Загружено в GitHub Release`);
   }
-}
-
-if (upload) {
-  await run('gh', ['release', 'edit', releaseTag, '--repo', repository, '--draft=false']);
 }
 
 console.log(`Обработано новых роликов: ${processed}; объём: ${(encodedBytes / 1024 / 1024).toFixed(1)} МБ`);

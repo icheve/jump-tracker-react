@@ -13,13 +13,33 @@ permissions:
   contents: write
 
 concurrency:
-  group: exercise-videos
-  cancel-in-progress: true
+  group: exercise-videos-v2
+  cancel-in-progress: false
 
 jobs:
-  prepare:
+  publish-release:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Publish video release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VIDEO_RELEASE_ONLY: 1
+        run: node scripts/prepare-videos.mjs
+
+  prepare:
+    needs: publish-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -38,4 +58,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           MAX_SOURCE_BYTES: 209715200
+          VIDEO_SHARD_COUNT: 8
+          VIDEO_SHARD_INDEX: ${{ matrix.shard }}
         run: node scripts/prepare-videos.mjs

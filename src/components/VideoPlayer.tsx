@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Sheet } from './Sheet';
 
 interface VideoButtonProps {
@@ -74,10 +74,60 @@ function resolveVideo(url: string): ResolvedVideo {
   return { kind: 'file', src: url, optimized: false };
 }
 
+async function yandexDirectVideo(url: string): Promise<string> {
+  const endpoint = `https://cloud-api.yandex.net/v1/disk/public/resources/download?public_key=${encodeURIComponent(url)}`;
+  const response = await fetch(endpoint);
+  if (!response.ok) throw new Error(`Яндекс Диск вернул ${response.status}`);
+  const data = await response.json() as { href?: unknown };
+  if (typeof data.href !== 'string' || !data.href) {
+    throw new Error('Яндекс Диск не вернул адрес видео');
+  }
+  return data.href;
+}
+
 function VideoPlayer({ url, title, onClose }: { url: string; title: string; onClose: () => void }) {
   const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState('');
+  const [fallbackLoading, setFallbackLoading] = useState(false);
   const resolved = useMemo(() => resolveVideo(url), [url]);
+  const [playerSrc, setPlayerSrc] = useState(resolved.src);
+  const [sourceMode, setSourceMode] = useState<'optimized' | 'direct' | 'original'>(
+    resolved.optimized ? 'optimized' : 'original',
+  );
+  const directAttempted = useRef(false);
+
+  async function handleFileError() {
+    if (resolved.optimized && sourceMode === 'optimized' && !directAttempted.current) {
+      directAttempted.current = true;
+      setFallbackLoading(true);
+      try {
+        const directUrl = await yandexDirectVideo(url);
+        setPlayerSrc(directUrl);
+        setSourceMode('direct');
+        setAttempt((value) => value + 1);
+        setFallbackLoading(false);
+        return;
+      } catch {
+        setFallbackLoading(false);
+        setError('Подготовленная копия ещё недоступна, а прямой поток получить не удалось.');
+        return;
+      }
+    }
+
+    setFallbackLoading(false);
+    setError(sourceMode === 'direct'
+      ? 'Браузер не смог воспроизвести исходный формат видео.'
+      : 'Не удалось загрузить видео.');
+  }
+
+  function retry() {
+    setError('');
+    setFallbackLoading(false);
+    directAttempted.current = false;
+    setPlayerSrc(resolved.src);
+    setSourceMode(resolved.optimized ? 'optimized' : 'original');
+    setAttempt((value) => value + 1);
+  }
 
   return (
     <Sheet onClose={onClose}>
@@ -95,19 +145,26 @@ function VideoPlayer({ url, title, onClose }: { url: string; title: string; onCl
         </div>
       )}
 
-      {resolved.kind === 'file' && !error && (
+      {resolved.kind === 'file' && !error && !fallbackLoading && (
         <video
           key={attempt}
           className="video-player"
-          src={resolved.src}
+          src={playerSrc}
           controls
           controlsList="nodownload"
           playsInline
           preload="metadata"
-          onError={() => setError('Не удалось загрузить подготовленную версию видео.')}
+          onError={() => { void handleFileError(); }}
         >
           Ваш браузер не поддерживает воспроизведение видео.
         </video>
+      )}
+
+      {fallbackLoading && (
+        <div className="video-error" aria-live="polite">
+          <b>Подготовленная копия ещё не готова</b>
+          <div className="mut">Пробую открыть исходное видео с Яндекс.Диска…</div>
+        </div>
       )}
 
       {error && (
@@ -115,10 +172,7 @@ function VideoPlayer({ url, title, onClose }: { url: string; title: string; onCl
           <b>Видео не открылось</b>
           <div className="mut">{error}</div>
           <div className="row" style={{ marginTop: 12 }}>
-            <button className="btn sm" type="button" onClick={() => {
-              setError('');
-              setAttempt((value) => value + 1);
-            }}>
+            <button className="btn sm" type="button" onClick={retry}>
               Повторить
             </button>
             <a className="btn sm sec" href={url} target="_blank" rel="noopener noreferrer">
@@ -131,9 +185,14 @@ function VideoPlayer({ url, title, onClose }: { url: string; title: string; onCl
       {resolved.kind === 'youtube' && (
         <div className="mut video-hint">Видео воспроизводится через YouTube.</div>
       )}
-      {resolved.optimized && (
+      {resolved.optimized && sourceMode === 'optimized' && (
         <div className="mut video-hint">
           Оптимизированная H.264-копия открывается прямо в приложении.
+        </div>
+      )}
+      {sourceMode === 'direct' && !error && (
+        <div className="mut video-hint">
+          Открыт оригинал с Яндекс.Диска. На некоторых устройствах формат HEVC может не поддерживаться.
         </div>
       )}
     </Sheet>
