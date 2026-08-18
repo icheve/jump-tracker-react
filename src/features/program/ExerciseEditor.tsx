@@ -27,6 +27,7 @@ export function ExerciseEditor({ initial, onSave, onDelete, onClose }:
   const [rest, setRest] = useState(x.rest);
   const [note, setNote] = useState(x.note);
   const [block, setBlock] = useState(x.block ?? '');
+  const [superset, setSuperset] = useState(x.superset ?? '');
   const [blockRest, setBlockRest] = useState(x.blockRest ?? '');
 
   const known = knownExercises(app.prog);
@@ -58,6 +59,8 @@ export function ExerciseEditor({ initial, onSave, onDelete, onClose }:
       <input value={note} onChange={(e) => setNote(e.target.value)} />
       <label>Блок (A, B, C…)</label>
       <input value={block} onChange={(e) => setBlock(e.target.value.toUpperCase())} placeholder="не указан — отдельное упражнение" />
+      <label>Суперсет внутри блока (1, 2…)</label>
+      <input value={superset} onChange={(e) => setSuperset(e.target.value)} placeholder="не указан — один общий круг" />
       <label>Общий отдых блока</label>
       <input value={blockRest} onChange={(e) => setBlockRest(e.target.value)} placeholder="1 мин между упражнениями…" />
       <div className="row" style={{ marginTop: 14 }}>
@@ -69,6 +72,7 @@ export function ExerciseEditor({ initial, onSave, onDelete, onClose }:
             v: videoList.find(Boolean) ?? '',
             videos: videoList.length > 1 ? videoList : undefined,
             block: block.trim() || undefined,
+            superset: superset.trim() || undefined,
             blockRest: blockRest.trim() || undefined,
             s: parseSets(sets), rest: rest.trim(), note: note.trim(),
           });

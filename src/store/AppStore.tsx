@@ -88,12 +88,14 @@ function upgradeLegacyProgram(days: Day[], profile: Profile | null): Day[] {
 }
 
 /** Добавляет отсутствующие видео и метки блоков из эталонной программы.
- *  Названия, подходы и уже заданные пользователем поля не меняются. */
+ *  Версионные исправления структуры применяются один раз целиком. */
 function enrichProgramMetadata(days: Day[]): Day[] {
   let programChanged = false;
   const next = days.map((day) => {
     const sourceDay = DEFAULT_PROGRAM.find((source) => source.t === day.t);
     if (!sourceDay) return day;
+    const sourceStructureVersion = sourceDay.structureVersion ?? 0;
+    const needsStructureUpgrade = sourceStructureVersion > (day.structureVersion ?? 0);
 
     let dayChanged = false;
     const exercises = day.e.map((exercise) => {
@@ -102,9 +104,16 @@ function enrichProgramMetadata(days: Day[]): Day[] {
 
       const needsPrimary = !exercise.v && !!source.v;
       const needsVariants = !exercise.videos?.some(Boolean) && !!source.videos?.some(Boolean);
-      const needsBlock = !exercise.block && !!source.block;
-      const needsBlockRest = !exercise.blockRest && !!source.blockRest;
-      if (!needsPrimary && !needsVariants && !needsBlock && !needsBlockRest) return exercise;
+      const needsBlock = needsStructureUpgrade
+        ? exercise.block !== source.block
+        : !exercise.block && !!source.block;
+      const needsSuperset = needsStructureUpgrade
+        ? exercise.superset !== source.superset
+        : !exercise.superset && !!source.superset;
+      const needsBlockRest = needsStructureUpgrade
+        ? exercise.blockRest !== source.blockRest
+        : !exercise.blockRest && !!source.blockRest;
+      if (!needsPrimary && !needsVariants && !needsBlock && !needsSuperset && !needsBlockRest) return exercise;
 
       dayChanged = true;
       return {
@@ -112,13 +121,18 @@ function enrichProgramMetadata(days: Day[]): Day[] {
         v: needsPrimary ? source.v : exercise.v,
         videos: needsVariants ? source.videos : exercise.videos,
         block: needsBlock ? source.block : exercise.block,
+        superset: needsSuperset ? source.superset : exercise.superset,
         blockRest: needsBlockRest ? source.blockRest : exercise.blockRest,
       };
     });
 
-    if (!dayChanged) return day;
+    if (!dayChanged && !needsStructureUpgrade) return day;
     programChanged = true;
-    return { ...day, e: exercises };
+    return {
+      ...day,
+      e: exercises,
+      structureVersion: needsStructureUpgrade ? sourceStructureVersion : day.structureVersion,
+    };
   });
   return programChanged ? next : days;
 }
@@ -283,9 +297,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   function loadLocalFor(userId: string, profile: Profile | null) {
     const k = (n: string) => lsKey(userId, n);
     const cachedProgram = LS.get<Day[] | null>(k('program'), null) ?? (sb ? [] : seedProgram(profile));
-    const upgradedProgram = upgradeLegacyProgram(cachedProgram, profile);
+    const upgradedProgram = enrichProgramMetadata(upgradeLegacyProgram(cachedProgram, profile));
     setProg(upgradedProgram);
-    if (!sb && upgradedProgram !== cachedProgram) LS.set(k('program'), upgradedProgram);
+    if (upgradedProgram !== cachedProgram) LS.set(k('program'), upgradedProgram);
     setLogs(LS.get(k('logs'), []));
     setMetrics(LS.get(k('metrics'), []));
     setSettings(normSettings(LS.get(k('settings'), null)));

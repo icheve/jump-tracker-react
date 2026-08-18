@@ -67,9 +67,17 @@ export function WorkoutTab({ setHead, goStats, goProgram }:
           ? x.videos.filter(Boolean)
           : (selectedVideo ? [selectedVideo] : []);
         const block = x.block?.trim();
+        const superset = x.superset?.trim();
         const blockStart = !!block && aw.ex[j - 1]?.block !== block;
         const blockEnd = !!block && aw.ex[j + 1]?.block !== block;
         const blockIndex = block ? aw.ex.slice(0, j + 1).filter((item) => item.block === block).length : 0;
+        const supersetStart = !!superset && (blockStart || aw.ex[j - 1]?.superset !== superset);
+        const supersetIndex = superset
+          ? aw.ex.slice(0, j + 1).filter((item) => item.block === block && item.superset === superset).length
+          : blockIndex;
+        const supersetCount = block
+          ? new Set(aw.ex.filter((item) => item.block === block).map((item) => item.superset).filter(Boolean)).size
+          : 0;
         const doneCnt = x.rows.filter((r) => r.done).length;
         const prev = lastFor(app.logs, x.n);
         const rm = app.settings.rm[x.n];
@@ -77,14 +85,15 @@ export function WorkoutTab({ setHead, goStats, goProgram }:
           <div key={j} className={block ? 'training-block-entry' : ''}>
             {blockStart && (
               <div className="training-block-head">
-                <div><b>Блок {block}</b><span>выполнять по кругу</span></div>
+                <div><b>Блок {block}</b><span>{supersetCount > 1 ? `${supersetCount} суперсета` : 'выполнять по кругу'}</span></div>
                 {x.blockRest && <div className="mut">⏱ {x.blockRest}</div>}
               </div>
             )}
+            {supersetStart && <div className="superset-head">Суперсет {superset}</div>}
             <div className={`card ${block ? `training-block-item ${blockEnd ? 'last' : ''}` : ''}`}>
             <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div className="exname" style={{ flex: 1 }}>
-                {block && <span className="block-code">{block}{blockIndex}</span>}
+                {block && <span className="block-code">{superset ? `${block}${superset}.${supersetIndex}` : `${block}${blockIndex}`}</span>}
                 {vars[0]}{x.note && <span className="mut"> ({x.note})</span>}
               </div>
               <span className="mut">{doneCnt}/{x.rows.length}</span>

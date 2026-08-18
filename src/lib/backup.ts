@@ -14,9 +14,11 @@ const num = (x: unknown): x is number => typeof x === 'number' && Number.isFinit
 
 function isDay(x: unknown): x is Day {
   if (!obj(x) || !str(x.t) || !str(x.s) || !Array.isArray(x.e)) return false;
+  if (x.structureVersion !== undefined && (!num(x.structureVersion) || x.structureVersion < 0)) return false;
   return x.e.every((e) => obj(e) && str(e.n) && str(e.v) && str(e.rest) && str(e.note)
     && (e.videos === undefined || (Array.isArray(e.videos) && e.videos.every(str)))
     && (e.block === undefined || str(e.block))
+    && (e.superset === undefined || str(e.superset))
     && (e.blockRest === undefined || str(e.blockRest))
     && Array.isArray(e.s) && e.s.every((set) => Array.isArray(set) && set.length === 3
       && num(set[0]) && set[0] >= 0 && str(set[1]) && str(set[2])));

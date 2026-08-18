@@ -6,6 +6,7 @@ export interface Exercise {
   v: string;      // основная/первая ссылка на видео (совместимость со старыми данными)
   videos?: string[]; // ссылки по индексам вариантов названия
   block?: string; // метка парного/кругового блока: A, B, C…
+  superset?: string; // номер суперсета внутри общего блока
   blockRest?: string; // общая инструкция по отдыху внутри блока
   s: SetScheme[]; // подходы
   rest: string;   // отдых
@@ -16,6 +17,7 @@ export interface Day {
   t: string; // «День 1»
   s: string; // подзаголовок «ГМВ 50 + КОР + УВМ»
   e: Exercise[];
+  structureVersion?: number; // версия эталонной разбивки на блоки/суперсеты
 }
 
 export interface LogSet { w: string; r: string; done: boolean }
@@ -66,7 +68,7 @@ export interface Template {
 export interface ActiveRow { plan: string; int: string; w: string; r: string; done: boolean }
 export interface ActiveExercise {
   n: string; v: string; videos?: string[]; rest: string; note: string;
-  block?: string; blockRest?: string;
+  block?: string; superset?: string; blockRest?: string;
   variant: number; unote: string; rows: ActiveRow[];
 }
 export interface ActiveWorkout { dayIdx: number; dayTitle: string; start: number; ex: ActiveExercise[] }

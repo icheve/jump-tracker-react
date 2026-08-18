@@ -52,7 +52,7 @@ export function DayView({ dayIdx, setHead, onBack, goWorkout }:
       start: Date.now(),
       ex: d.e.map((x) => ({
         n: x.n, v: x.v, videos: x.videos, rest: x.rest, note: x.note,
-        block: x.block, blockRest: x.blockRest, variant: 0, unote: '',
+        block: x.block, superset: x.superset, blockRest: x.blockRest, variant: 0, unote: '',
         rows: x.s.flatMap((g) =>
           Array.from({ length: g[0] }, () => ({ plan: g[1], int: g[2], w: '', r: '', done: false }))),
       })),
@@ -83,21 +83,30 @@ export function DayView({ dayIdx, setHead, onBack, goWorkout }:
         const variants = x.n.split(' / ');
         const videos = x.videos?.length ? x.videos : (x.v ? [x.v] : []);
         const block = x.block?.trim();
+        const superset = x.superset?.trim();
         const blockStart = !!block && d.e[j - 1]?.block !== block;
         const blockEnd = !!block && d.e[j + 1]?.block !== block;
         const blockIndex = block ? d.e.slice(0, j + 1).filter((item) => item.block === block).length : 0;
+        const supersetStart = !!superset && (blockStart || d.e[j - 1]?.superset !== superset);
+        const supersetIndex = superset
+          ? d.e.slice(0, j + 1).filter((item) => item.block === block && item.superset === superset).length
+          : blockIndex;
+        const supersetCount = block
+          ? new Set(d.e.filter((item) => item.block === block).map((item) => item.superset).filter(Boolean)).size
+          : 0;
         return (
           <div key={j} className={block ? 'training-block-entry' : ''}>
             {blockStart && (
               <div className="training-block-head">
-                <div><b>Блок {block}</b><span>выполнять по кругу</span></div>
+                <div><b>Блок {block}</b><span>{supersetCount > 1 ? `${supersetCount} суперсета` : 'выполнять по кругу'}</span></div>
                 {x.blockRest && <div className="mut">⏱ {x.blockRest}</div>}
               </div>
             )}
+            {supersetStart && <div className="superset-head">Суперсет {superset}</div>}
             <div className={`card ${block ? `training-block-item ${blockEnd ? 'last' : ''}` : ''}`}>
             <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div className="exname" style={{ flex: 1 }}>
-                {block && <span className="block-code">{block}{blockIndex}</span>}{x.n}
+                {block && <span className="block-code">{superset ? `${block}${superset}.${supersetIndex}` : `${block}${blockIndex}`}</span>}{x.n}
               </div>
               <button className="btn sm sec" onClick={() => setEditIdx(j)}>✎</button>
             </div>
